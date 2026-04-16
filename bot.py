@@ -7,7 +7,24 @@ from datetime import datetime, timedelta
 from aiohttp import web
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import asyncio
+import threading
+import time
+import requests
+
+def self_ping_thread():
+    while True:
+        time.sleep(300)  # 5 минут
+        try:
+            requests.get("https://roofchikbot.onrender.com")
+            print("Self-ping выполнен")
+        except:
+            pass
+
+def start_self_ping():
+    thread = threading.Thread(target=self_ping_thread, daemon=True)
+    thread.start()
+
+# ====================================
 
 # Настройка логирования
 logging.basicConfig(
@@ -456,8 +473,7 @@ def main():
     print("Бот запущен...")
     print(f"Всего загружено ЖК: {len(buildings)}")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-    loop = asyncio.get_event_loop()
-    loop.create_task(self_ping())
+    start_self_ping()
 
 async def self_ping():
     while True:
