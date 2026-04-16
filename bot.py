@@ -456,7 +456,8 @@ def main():
     print("Бот запущен...")
     print(f"Всего загружено ЖК: {len(buildings)}")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-    asyncio.create_task(self_ping())
+    loop = asyncio.get_event_loop()
+    loop.create_task(self_ping())
 
 async def self_ping():
     while True:
