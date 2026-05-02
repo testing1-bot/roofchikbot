@@ -10,16 +10,25 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 import threading
 import time
 import requests
+import signal
+
+def restart_bot():
+    print("⚠️ Бот завис, принудительное завершение...")
+    os._exit(1)  # Это заставит Render перезапустить сервис
 
 def self_ping_thread():
+    failed_pings = 0
     while True:
         time.sleep(300)  # 5 минут
         try:
-            requests.get("https://roofchikbot.onrender.com")
+            requests.get("https://roofchikbot.onrender.com", timeout=10)
             print("Self-ping выполнен")
-        except:
-            pass
-
+            failed_pings = 0
+        except Exception as e:
+            failed_pings += 1
+            print(f"Пинг не удался ({failed_pings}/3): {e}")
+            if failed_pings >= 3:
+                restart_bot()
 def start_self_ping():
     thread = threading.Thread(target=self_ping_thread, daemon=True)
     thread.start()
@@ -470,20 +479,11 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler))
     loop = asyncio.get_event_loop()
     loop.create_task(start_webserver())
+    ping_thread = threading.Thread(target=self_ping_thread, daemon=True)
+    ping_thread.start()
     print("Бот запущен...")
     print(f"Всего загружено ЖК: {len(buildings)}")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-    start_self_ping()
-
-async def self_ping():
-    while True:
-        await asyncio.sleep(300)  # 5 минут
-        try:
-            import requests
-            requests.get("https://roofchikbot.onrender.com")
-            print("Self-ping выполнен")
-        except:
-            pass
-
+    
 if __name__ == '__main__':
     main()
